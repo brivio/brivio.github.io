@@ -1,0 +1,168 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>口袋推管家日志 | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">口袋推管家日志</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">口袋推管家日志</h1><div class="post-meta">2016-05-26 17:19:50 | <span class="categories">分类于<a href="/categories/work/">work</a></span></div><span data-thread-key="work/koudaitui/" class="ds-thread-count"></span><div class="post-content"><p>口袋推管家android端的一些说明  </p>
+<h2 id="APP端"><a href="#APP端" class="headerlink" title="APP端"></a>APP端</h2><h3 id="携带的cookie"><a href="#携带的cookie" class="headerlink" title="携带的cookie"></a>携带的cookie</h3><p>APP端webview在访问wap网站时会携带这些cookie</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">字段</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">device_token</td>
+<td>设备token，值是base64编码形式，服务器端需要base64解码</td>
+</tr>
+<tr>
+<td style="text-align:left">device_platform</td>
+<td>目前取值：android</td>
+</tr>
+</tbody>
+</table>
+<h3 id="JavaScript接口"><a href="#JavaScript接口" class="headerlink" title="JavaScript接口"></a>JavaScript接口</h3><blockquote>
+<p>js调试需要用document.write。不支持alert。</p>
+</blockquote>
+<h4 id="Api列表"><a href="#Api列表" class="headerlink" title="Api列表"></a>Api列表</h4><pre><code class="javascript">/*
+js接口初始化
+
+初始化完，AppShare等函数才能使用.
+ */
+AppLoad(fn);
+
+/*
+第三方分享
+
+url、img必须都是http形式的链接
+
+例子：
+    AppShare(
+        &#39;分享标题&#39;, 
+        &#39;分享内容&#39;, 
+        &#39;http://www.baidu.com&#39;, 
+        &#39;http://img1.gtimg.com/v_syjx_pad/pics/hv1/141/89/2077/135079761.jpg&#39;
+    )
+ */
+AppShare(title, content, url, img);
+</code></pre>
+<h4 id="调用例子"><a href="#调用例子" class="headerlink" title="调用例子"></a>调用例子</h4><pre><code class="html">&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;title&gt;Document&lt;/title&gt;
+    &lt;meta name=&quot;viewport&quot;
+          content=&quot;width=device-width,initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no&quot;&gt;
+    &lt;style type=&quot;text/css&quot;&gt;
+        input[type=&quot;button&quot;] {
+            display: block;
+            margin: 20px auto;
+            height: 50px;
+            width: 80%;
+            -webkit-appearance: none;
+        }
+    &lt;/style&gt;
+    &lt;script type=&quot;text/javascript&quot; src=&quot;./static/js/jquery/jquery.js&quot;&gt;&lt;/script&gt;
+    &lt;script type=&quot;text/javascript&quot; src=&quot;./static/js/hybrid.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;input type=&quot;button&quot; value=&quot;分享&quot; id=&quot;J_share&quot;&gt;
+&lt;/body&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+    AppLoad(function () {
+        $(&#39;#J_share&#39;).click(function () {
+            AppShare(&#39;分享标题&#39;, &#39;分享内容&#39;, &#39;http://www.baidu.com&#39;, &#39;http://img1.gtimg.com/v_syjx_pad/pics/hv1/141/89/2077/135079761.jpg&#39;);
+        });
+    });
+&lt;/script&gt;
+&lt;/html&gt;
+</code></pre>
+<h4 id="hybrid-js源代码："><a href="#hybrid-js源代码：" class="headerlink" title="hybrid.js源代码："></a>hybrid.js源代码：</h4><pre><code class="js">(function () {
+    function getArguments(args) {
+        var result = [];
+        for (var key in args) {
+            result.push(args[key]);
+        }
+        return result;
+    }
+
+    window.AppLoad = function (callback) {
+        if (window.WebViewJavascriptBridge) {
+            callback(WebViewJavascriptBridge)
+        } else {
+            document.addEventListener(&#39;WebViewJavascriptBridgeReady&#39;, function () {
+                    callback(WebViewJavascriptBridge)
+                },
+                false
+            );
+        }
+    };
+    window.AppShare = function (title, content, url, img) {
+        window.WebViewJavascriptBridge.callHandler(
+            &#39;share&#39;,
+            getArguments(arguments),
+            null
+        );
+    };
+})();
+</code></pre>
+<h2 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h2><h3 id="获取设备token"><a href="#获取设备token" class="headerlink" title="获取设备token"></a>获取设备token</h3><p>获取设备token（即设备的注册id）的方法  </p>
+<pre><code class="php">$device_token=base64_decode($_COOKIE[&#39;device_token&#39;]);
+</code></pre>
+<h3 id="发送消息"><a href="#发送消息" class="headerlink" title="发送消息"></a>发送消息</h3><p>向android端需要发送自定义消息，消息体如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">字段</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">title</td>
+<td>消息标题，20个字以内为宜</td>
+</tr>
+<tr>
+<td style="text-align:left">content</td>
+<td>消息内容，50个字以内为宜</td>
+</tr>
+<tr>
+<td style="text-align:left">icon</td>
+<td>图标</td>
+</tr>
+<tr>
+<td style="text-align:left">url</td>
+<td>消息链接</td>
+</tr>
+</tbody>
+</table>
+<p>服务器端php参考代码：</p>
+<pre><code class="php">$client = new JPush($appKey, $masterSecret);
+
+$message = array(
+    &#39;title&#39;   =&gt; &#39;测试标题&#39;,
+    &#39;content&#39; =&gt; &#39;测试内容&#39;,
+    &#39;url&#39;     =&gt; &#39;http://www.baidu.com&#39;,
+    &#39;icon&#39;    =&gt; &#39;http://q2.qlogo.cn/g?b=qq&amp;k=dXUibRnYqBTncxGMHic5hOsA&amp;s=40&amp;t=1451886050&#39;,
+);
+$result = $client-&gt;push()
+    -&gt;setPlatform(&#39;all&#39;)
+    -&gt;addRegistrationId(&#39;120c83f760247174b6d&#39;)
+    -&gt;setMessage(json_encode($message))
+    -&gt;send();
+</code></pre>
+</div><div class="tags"><a href="/tags/app/">app</a></div><div class="post-nav"><a href="/work/ku-che-lian-meng/" class="pre"><i class="icon-previous">酷车联盟</i></a><a href="/work/api-sdk-scripts/" class="next">接口SDK生成脚本<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#APP端"><span class="toc-number">1.</span> <span class="toc-text">APP端</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#携带的cookie"><span class="toc-number">1.1.</span> <span class="toc-text">携带的cookie</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JavaScript接口"><span class="toc-number">1.2.</span> <span class="toc-text">JavaScript接口</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Api列表"><span class="toc-number">1.2.1.</span> <span class="toc-text">Api列表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#调用例子"><span class="toc-number">1.2.2.</span> <span class="toc-text">调用例子</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hybrid-js源代码："><span class="toc-number">1.2.3.</span> <span class="toc-text">hybrid.js源代码：</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#服务器端"><span class="toc-number">2.</span> <span class="toc-text">服务器端</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#获取设备token"><span class="toc-number">2.1.</span> <span class="toc-text">获取设备token</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#发送消息"><span class="toc-number">2.2.</span> <span class="toc-text">发送消息</span></a></li></ol></li></ol></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>

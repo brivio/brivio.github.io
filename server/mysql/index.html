@@ -1,0 +1,73 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>mysql | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">mysql</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">mysql</h1><div class="post-meta">2016-08-29 16:22:21 | <span class="categories">分类于<a href="/categories/server/">server</a></span></div><span data-thread-key="server/mysql/" class="ds-thread-count"></span><div class="post-content"><p>mysql 学习</p>
+<h2 id="主从分离"><a href="#主从分离" class="headerlink" title="主从分离"></a>主从分离</h2><p>参考地址：<br>主从分离：<br><a href="http://heylinux.com/archives/1004.html" target="_blank" rel="external">http://heylinux.com/archives/1004.html</a><br>线上MYSQL同步报错故障处理总结<br><a href="http://xstarcd.github.io/wiki/MySQL/online_mysqlrepl_error.html" target="_blank" rel="external">http://xstarcd.github.io/wiki/MySQL/online_mysqlrepl_error.html</a></p>
+<h3 id="master配置"><a href="#master配置" class="headerlink" title="master配置"></a>master配置</h3><pre><code class="ini">[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+sql_mode = ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+
+symbolic-links=0
+
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+character-set-server=utf8mb4
+#skip-grant-tables
+server-id = 1
+log-bin=mysql-bin
+binlog-do-db=yiqihui
+binlog-ignore-db=mysql
+log-bin=/var/lib/mysql/updatelog
+log-slave-updates
+</code></pre>
+<h3 id="slave配置"><a href="#slave配置" class="headerlink" title="slave配置"></a>slave配置</h3><pre><code class="ini">[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+symbolic-links=0
+sql_mode = ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+character-set-server=utf8mb4
+#skip-grant-tables
+#数据库ID号， 为1时表示为Master,其中master_id必须为1到232–1之间的一个正整数值
+server-id = 2
+#启用二进制日志
+log-bin=mysql-bin
+#不需要备份的数据库
+replicate-ignore-db=mysql
+#需要备份的数据库
+replicate-do-db=yiqihui
+
+log-bin=/var/lib/mysql/updatelog
+log-slave-updates
+</code></pre>
+<h3 id="启动slave"><a href="#启动slave" class="headerlink" title="启动slave"></a>启动slave</h3><p>master执行sql</p>
+<pre><code class="sql">GRANT REPLICATION SLAVE ON *.* to &#39;slave16&#39;@&#39;139.196.151.204&#39; identified by &#39;slave16A_&#39;;
+show master status\G
+</code></pre>
+<p>salve执行Sql</p>
+<pre><code class="SQL">stop slave
+change master to master_host=&#39;139.196.151.204&#39;,master_user=&#39;slave16&#39;,master_password=&#39;slave16A_&#39;,master_log_file=&#39;updatelog.000002&#39;,master_log_pos=3630;
+set global sql_slave_skip_counter=1;
+start slave;
+</code></pre>
+<h3 id="操作方法"><a href="#操作方法" class="headerlink" title="操作方法"></a>操作方法</h3><p>进入管理界面 </p>
+<pre><code class="sql">mysql -h127.0.0.1 -uuser -ppwd -P2345
+</code></pre>
+</div><div class="tags"></div><div class="post-nav"><a href="/app/android/" class="pre"><i class="icon-previous">android日志</i></a><a href="/work/duotan/" class="next">多谈<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#主从分离"><span class="toc-number">1.</span> <span class="toc-text">主从分离</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#master配置"><span class="toc-number">1.1.</span> <span class="toc-text">master配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#slave配置"><span class="toc-number">1.2.</span> <span class="toc-text">slave配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#启动slave"><span class="toc-number">1.3.</span> <span class="toc-text">启动slave</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#操作方法"><span class="toc-number">1.4.</span> <span class="toc-text">操作方法</span></a></li></ol></li></ol></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>

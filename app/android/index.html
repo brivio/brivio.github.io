@@ -1,0 +1,131 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>android日志 | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">android日志</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">android日志</h1><div class="post-meta">2016-09-22 09:38:59 | <span class="categories">分类于<a href="/categories/app/">app</a></span></div><span data-thread-key="app/android/" class="ds-thread-count"></span><div class="post-content"><p>android日志  </p>
+<h1 id="RelativeLayout简介"><a href="#RelativeLayout简介" class="headerlink" title="RelativeLayout简介"></a>RelativeLayout简介</h1><h2 id="与parent相对的属性"><a href="#与parent相对的属性" class="headerlink" title="与parent相对的属性"></a>与parent相对的属性</h2><table>
+<thead>
+<tr>
+<th>属性</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>android:layout_alignParentTop</td>
+<td>表示widget的顶部和Container的顶部对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignParentBottom</td>
+<td>表示widget的底部和Container的底部对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignParentStart</td>
+<td>表示widget的左边和Container的起始边缘对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignParentEnd</td>
+<td>表示widget的左边和Container的结束边缘对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignParentLeft</td>
+<td>表示widget的左边和Container的左边对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignParentRight</td>
+<td>表示widget的右边和Container的右边对齐。</td>
+</tr>
+<tr>
+<td>android:layout_centerInParent</td>
+<td>表示widget处于Container平面上的正中间。</td>
+</tr>
+<tr>
+<td>android:layout_alignWithParentIfMissing</td>
+<td>若设置true，则当该控件layout_toLeftOf, layout_toRightOf等找不到相对的参考widget时，就以父container为参考。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="与widget相对的属性"><a href="#与widget相对的属性" class="headerlink" title="与widget相对的属性"></a>与widget相对的属性</h2><table>
+<thead>
+<tr>
+<th>属性</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>android:layout_above</td>
+<td>表示该widget位于参数值标识的widget的上方。</td>
+</tr>
+<tr>
+<td>android:layout_below</td>
+<td>表示该widget位于参数值标识的widget的下方。</td>
+</tr>
+<tr>
+<td>android:layout_alignTop</td>
+<td>表示该widget的顶部参数值标识的widget的顶部对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignBottom</td>
+<td>表示该widget的底部与参数值标识的widget的底部对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignStart</td>
+<td>表示该widget的起始边缘与参数值标识的widget的起始边缘对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignEnd</td>
+<td>表示该widget的结束边缘与参数值标识的widget的结束边缘对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignLeft</td>
+<td>表示该widget的左边与参数值标识的widget的左边对齐。</td>
+</tr>
+<tr>
+<td>android:layout_alignRight</td>
+<td>表示该widget的右边参数值标识的widget的右边对齐。</td>
+</tr>
+<tr>
+<td>android:layout_centerHorizontal</td>
+<td>表示widget处于Container水平方向上的中间。</td>
+</tr>
+<tr>
+<td>android:layout_centerVertical</td>
+<td>表示widget处于Container垂直方向上的中间。</td>
+</tr>
+<tr>
+<td>android:layout_alignBaseline</td>
+<td>表示该widget的BaseLine与参数值标识的widget的BaseLine对齐。</td>
+</tr>
+<tr>
+<td>android:layout_toLeftOf</td>
+<td>表示该widget位于参数值标识的widget的左方。</td>
+</tr>
+<tr>
+<td>android:layout_toRightOf</td>
+<td>表示该widget位于参数值标识的widget的右方。</td>
+</tr>
+<tr>
+<td>android:layout_toStartOf</td>
+<td>表示该widget结束边缘与参数值标识的widget的起始边缘对齐</td>
+</tr>
+<tr>
+<td>android:layout_toEndOf</td>
+<td>表示该widget起始边缘与参数值标识的widget的结束边缘对齐</td>
+</tr>
+</tbody>
+</table>
+</div><div class="tags"><a href="/tags/app/">app</a></div><div class="post-nav"><a href="/misc/5u-helper/" class="pre"><i class="icon-previous">杭州驾考网络教学助手</i></a><a href="/server/mysql/" class="next">mysql<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#RelativeLayout简介"><span class="toc-number">1.</span> <span class="toc-text">RelativeLayout简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#与parent相对的属性"><span class="toc-number">1.1.</span> <span class="toc-text">与parent相对的属性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#与widget相对的属性"><span class="toc-number">1.2.</span> <span class="toc-text">与widget相对的属性</span></a></li></ol></li></ol></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>

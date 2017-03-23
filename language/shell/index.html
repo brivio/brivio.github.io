@@ -1,0 +1,172 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>shell语法 | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">shell语法</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">shell语法</h1><div class="post-meta">2014-10-19 00:00:00 | <span class="categories">分类于<a href="/categories/language/">language</a></span></div><span data-thread-key="language/shell/" class="ds-thread-count"></span><div class="post-content"><p>shell语言一些参考  </p>
+<h2 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h2><h3 id="shell参数"><a href="#shell参数" class="headerlink" title="shell参数"></a>shell参数</h3><p><code>$#</code> 是传给脚本的参数个数<br><code>$@</code> 是传给脚本的所有参数的列表<br><code>$0</code> 是脚本本身的名字<br><code>$*</code> 以一个单字符串显示所有向脚本传递的参数（可大于9个）<br><code>$$</code> 脚本运行的当前进程的ID号<br><code>$!</code> 后台运行的最后一个进程的ID号<br><code>$-</code> 显示shell使用的当前选项<br><code>$?</code> 显示最后命令的退出状态，0表示无错误（这个变量也常常用来打印输出，在脚本调试时标记某个shell命令或某个函数是否正确执行，但是要注意，$?记载的是最近的函数或命令的退出状态，因此打印时应该立即打印以获得正确的信息）  </p>
+<h3 id="命令执行顺序"><a href="#命令执行顺序" class="headerlink" title="命令执行顺序"></a>命令执行顺序</h3><p><code>&amp;&amp;</code>  成功执行一个命令后再执行下一个<br><code>||</code>  一个命令执行失败后再执行另一个命令<br><code>()</code>、<code>{}</code>  在当前shell中执行一组命令（格式：(命令1;命令2; ……)）<br>例如：  comet mouth_end || ( echo “hello” | mail dave ;exit )，如果没有( )，则shell将直接执行最后一个命令（exit）</p>
+<h3 id="变量设置"><a href="#变量设置" class="headerlink" title="变量设置"></a>变量设置</h3><p><code>valiable_name=value</code>  设置实际值到 variable_name中<br><code>valiable_name+value</code>  如果设置了variable_name，则重设其值<br><code>valiable_name:?value</code> 如果未设置variable_name，则先显示未定义用户错误信息<br><code>valiable_name?value</code>  如果未设置variable_name，则显示系统错误信息<br><code>valiable_name:=value</code> 如果未设置variable_name，则设置其值<br><code>valiable_name-value</code>  同上，但取值并不设置到variable_name  </p>
+<h2 id="字符串操作"><a href="#字符串操作" class="headerlink" title="字符串操作"></a>字符串操作</h2><h3 id="判断读取字符串值"><a href="#判断读取字符串值" class="headerlink" title="判断读取字符串值"></a>判断读取字符串值</h3><table>
+<thead>
+<tr>
+<th>表达式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>${var}</td>
+<td>变量var的值, 与$var相同</td>
+</tr>
+<tr>
+<td>${var-DEFAULT}</td>
+<td>如果var没有被声明, 那么就以$DEFAULT作为其值 *</td>
+</tr>
+<tr>
+<td>${var:-DEFAULT}</td>
+<td>如果var没有被声明, 或者其值为空, 那么就以$DEFAULT作为其值 *</td>
+</tr>
+<tr>
+<td>${var=DEFAULT}</td>
+<td>如果var没有被声明, 那么就以$DEFAULT作为其值 *</td>
+</tr>
+<tr>
+<td>${var:=DEFAULT}</td>
+<td>如果var没有被声明, 或者其值为空, 那么就以$DEFAULT作为其值 *</td>
+</tr>
+<tr>
+<td>${var+OTHER}</td>
+<td>如果var声明了, 那么其值就是$OTHER, 否则就为null字符串</td>
+</tr>
+<tr>
+<td>${var:+OTHER}</td>
+<td>如果var被设置了, 那么其值就是$OTHER, 否则就为null字符串</td>
+</tr>
+<tr>
+<td>${var?ERR_MSG}</td>
+<td>如果var没被声明, 那么就打印$ERR_MSG *</td>
+</tr>
+<tr>
+<td>${var:?ERR_MSG}</td>
+<td>如果var没被设置, 那么就打印$ERR_MSG *</td>
+</tr>
+<tr>
+<td>${!varprefix*}</td>
+<td>匹配之前所有以varprefix开头进行声明的变量</td>
+</tr>
+<tr>
+<td>${!varprefix@}</td>
+<td>匹配之前所有以varprefix开头进行声明的变量</td>
+</tr>
+</tbody>
+</table>
+<h3 id="字符串操作-1"><a href="#字符串操作-1" class="headerlink" title="字符串操作"></a>字符串操作</h3><table>
+<thead>
+<tr>
+<th>表达式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>${井string}</td>
+<td>$string的长度</td>
+</tr>
+<tr>
+<td>${string:position}</td>
+<td>在$string中, 从位置$position开始提取子串</td>
+</tr>
+<tr>
+<td>${string:position:length}</td>
+<td>在$string中, 从位置$position开始提取长度为$length的子串</td>
+</tr>
+<tr>
+<td>${string#substring}</td>
+<td>从变量$string的开头, 删除最短匹配$substring的子串</td>
+</tr>
+<tr>
+<td>${string##substring}</td>
+<td>从变量$string的开头, 删除最长匹配$substring的子串</td>
+</tr>
+<tr>
+<td>${string%substring}</td>
+<td>从变量$string的结尾, 删除最短匹配$substring的子串</td>
+</tr>
+<tr>
+<td>${string%%substring}</td>
+<td>从变量$string的结尾, 删除最长匹配$substring的子串</td>
+</tr>
+<tr>
+<td>${string/substring/replacement}</td>
+<td>使用$replacement, 来代替第一个匹配的$substring</td>
+</tr>
+<tr>
+<td>${string//substring/replacement}</td>
+<td>使用$replacement, 代替所有匹配的$substring</td>
+</tr>
+<tr>
+<td>${string/#substring/replacement}</td>
+<td>如果$string的前缀匹配$substring, 那么就用$replacement来代替匹配到的$substring</td>
+</tr>
+<tr>
+<td>${string/%substring/replacement}</td>
+<td>如果$string的后缀匹配$substring, 那么就用$replacement来代替匹配到的$substring</td>
+</tr>
+</tbody>
+</table>
+<h2 id="判断语句"><a href="#判断语句" class="headerlink" title="判断语句"></a>判断语句</h2><h3 id="if语法"><a href="#if语法" class="headerlink" title="if语法"></a>if语法</h3><pre><code class="sh">if list then 
+  do something here 
+elif list then 
+  do another thing here 
+else 
+ do something else here 
+fi
+</code></pre>
+<p>基本上和其他脚本语言一样。没有太大区别。不过值得注意的是。[]里面的条件判断。  </p>
+<h3 id="字符串判断"><a href="#字符串判断" class="headerlink" title="字符串判断"></a>字符串判断</h3><p><code>str1 = str2</code>    当两个串有相同内容、长度时为真<br><code>str1 != str2</code>   当串str1和str2不等时为真<br><code>-n str1</code>        当串的长度大于0时为真(串非空)<br><code>-z str1</code>        当串的长度为0时为真(空串)<br><code>str1</code>           当串str1为非空时为真  </p>
+<h3 id="数字的判断"><a href="#数字的判断" class="headerlink" title="数字的判断"></a>数字的判断</h3><p>int1 -eq int2　　　　两数相等为真<br>int1 -ne int2　　　　两数不等为真<br>int1 -gt int2　　　　int1大于int2为真<br>int1 -ge int2　　　　int1大于等于int2为真<br>int1 -lt int2　　　　int1小于int2为真<br>int1 -le int2　　　　int1小于等于int2为真 </p>
+<h3 id="文件的判断"><a href="#文件的判断" class="headerlink" title="文件的判断"></a>文件的判断</h3><p>-r file　　　　　用户可读为真<br>-w file　　　　　用户可写为真<br>-x file　　　　　用户可执行为真<br>-f file　　　　　文件为正规文件为真<br>-d file　　　　　文件为目录为真<br>-c file　　　　　文件为字符特殊文件为真<br>-b file　　　　　文件为块特殊文件为真<br>-s file　　　　　文件大小非0时为真<br>-t file　　　　　当文件描述符(默认为1)指定的设备为终端时为真 </p>
+<h3 id="复杂逻辑判断"><a href="#复杂逻辑判断" class="headerlink" title="复杂逻辑判断"></a>复杂逻辑判断</h3><p>-a 　 　　　　　 与<br>-o　　　　　　　 或<br>!　　　　　　　　非 </p>
+<h2 id="数组、字典"><a href="#数组、字典" class="headerlink" title="数组、字典"></a>数组、字典</h2><pre><code class="sh">echo &quot;shell定义字典&quot;
+#必须先声明
+declare -A dic
+dic=([key1]=&quot;value1&quot; [key2]=&quot;value2&quot; [key3]=&quot;value3&quot;)
+
+#打印指定key的value
+echo ${dic[&quot;key1&quot;]}
+#打印所有key值
+echo ${!dic[*]}
+#打印所有value
+echo ${dic[*]}
+#遍历key值
+for key in $(echo ${!dic[*]})
+do
+    echo &quot;$key : ${dic[$key]}&quot;
+done
+
+echo &quot;shell定义数组&quot;
+#数组
+list=(&quot;value1&quot; &quot;value2&quot; &quot;value3&quot;)
+#打印指定下标
+echo ${list[1]}
+#打印所有下标
+echo ${!list[*]}
+#打印数组下标
+echo ${list[*]}
+#数组增加一个元素
+list=(&quot;${list[@]}&quot; &quot;value3&quot;)
+</code></pre>
+</div><div class="tags"></div><div class="post-nav"><a href="/web/qq-auto-login/" class="pre"><i class="icon-previous">QQ空间自动登录</i></a><a href="/tools/shell-access-network/" class="next">命令行访问网络<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#参数"><span class="toc-number">1.</span> <span class="toc-text">参数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#shell参数"><span class="toc-number">1.1.</span> <span class="toc-text">shell参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#命令执行顺序"><span class="toc-number">1.2.</span> <span class="toc-text">命令执行顺序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#变量设置"><span class="toc-number">1.3.</span> <span class="toc-text">变量设置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#字符串操作"><span class="toc-number">2.</span> <span class="toc-text">字符串操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#判断读取字符串值"><span class="toc-number">2.1.</span> <span class="toc-text">判断读取字符串值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#字符串操作-1"><span class="toc-number">2.2.</span> <span class="toc-text">字符串操作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#判断语句"><span class="toc-number">3.</span> <span class="toc-text">判断语句</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#if语法"><span class="toc-number">3.1.</span> <span class="toc-text">if语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#字符串判断"><span class="toc-number">3.2.</span> <span class="toc-text">字符串判断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#数字的判断"><span class="toc-number">3.3.</span> <span class="toc-text">数字的判断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#文件的判断"><span class="toc-number">3.4.</span> <span class="toc-text">文件的判断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#复杂逻辑判断"><span class="toc-number">3.5.</span> <span class="toc-text">复杂逻辑判断</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#数组、字典"><span class="toc-number">4.</span> <span class="toc-text">数组、字典</span></a></li></ol></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>

@@ -1,0 +1,314 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>Vim用法 | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Vim用法</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">Vim用法</h1><div class="post-meta">2014-11-21 00:00:00 | </div><span data-thread-key="tools/vim/" class="ds-thread-count"></span><div class="post-content"><p>vim用法和配置  </p>
+<p>##常用操作<br>1、移动光标：h（左）、j（下）、k（上）、l（右）<br>2、大范围移动键：ctrl+f（下一页），ctrl+b（上一页）<br>3、删除文本</p>
+<pre><code>`x` 删除光标处的字符  
+`dw` 删除从当前字的光标处到下一个字的开始处之间的内容  
+`d$`、`Shift-d` 删除从光标处到行尾之间的内容  
+`dd` 删除整行，不管光标在该行的位置  
+通过在上述命令之前键入一个整数，可将这些命令应用到几个对象中，例如：`4x`删除4个字符；`8dd` 删除8行  
+</code></pre><p>4、添加文本  </p>
+<pre><code>使用i在光标位置前插入文本  
+使用Shift-i使你进入输入模式并且在当前行行首插入文本  
+</code></pre><p>5、查找  </p>
+<pre><code>/string     在缓冲区中向前查找字符串string
+?string    在缓冲区中向后查找字符串string
+</code></pre><p>##配置</p>
+<pre><code class="text">    &quot;=========================================================================
+    &quot; DesCRiption: 适合自己使用的vimrc文件，for Linux/Windows, GUI/Console
+    &quot;
+    &quot; Last Change: 2010年08月02日 15时13分 
+    &quot;
+    &quot; Version: 1.80
+    &quot;
+    &quot;=========================================================================
+    set nocompatible &quot; 关闭 vi 兼容模式
+    syntax on &quot; 自动语法高亮
+    colorscheme default &quot; 设定配色方案
+    set number &quot; 显示行号
+    set cursorline &quot; 突出显示当前行
+    set ruler &quot; 打开状态栏标尺
+    set shiftwidth=4 &quot; 设定 &lt;&lt; 和 &gt;&gt; 命令移动时的宽度为 4
+    set softtabstop=4 &quot; 使得按退格键时可以一次删掉 4 个空格
+    set tabstop=4 &quot; 设定 tab 长度为 4
+    set nobackup &quot; 覆盖文件时不备份
+    set autochdir &quot; 自动切换当前目录为当前文件所在的目录
+    filetype plugin indent on &quot; 开启插件
+    set backupcopy=yes &quot; 设置备份时的行为为覆盖
+    set ignorecase smartcase &quot; 搜索时忽略大小写，但在有一个或以上大写字母时仍保持对大小写敏感
+    set nowrapscan &quot; 禁止在搜索到文件两端时重新搜索
+    set incsearch &quot; 输入搜索内容时就显示搜索结果
+    set hlsearch &quot; 搜索时高亮显示被找到的文本
+    set noerrorbells &quot; 关闭错误信息响铃
+    set novisualbell &quot; 关闭使用可视响铃代替呼叫
+    set t_vb= &quot; 置空错误铃声的终端代码
+    &quot; set showmatch &quot; 插入括号时，短暂地跳转到匹配的对应括号
+    &quot; set matchtime=2 &quot; 短暂跳转到匹配括号的时间
+    set magic &quot; 设置魔术
+    set hidden &quot; 允许在有未保存的修改时切换缓冲区，此时的修改由 vim 负责保存
+    set guioptions-=T &quot; 隐藏工具栏
+    set guioptions-=m &quot; 隐藏菜单栏
+    set smartindent &quot; 开启新行时使用智能自动缩进
+    set backspace=indent,eol,start
+    &quot; 不设定在插入状态无法用退格键和 Delete 键删除回车符
+    set cmdheight=1 &quot; 设定命令行的行数为 1
+    set laststatus=2 &quot; 显示状态栏 (默认值为 1, 无法显示状态栏)
+    set statusline=\ %&lt;%F[%1*%M%*%n%R%H]%=\ %y\ %0(%{&amp;fileformat}\ %{&amp;encoding}\ %c:%l/%L%)\ 
+    &quot; 设置在状态行显示的信息
+    set foldenable &quot; 开始折叠
+    set foldmethod=syntax &quot; 设置语法折叠
+    set foldcolumn=0 &quot; 设置折叠区域的宽度
+    setlocal foldlevel=1 &quot; 设置折叠层数为
+    &quot; set foldclose=all &quot; 设置为自动关闭折叠 
+    &quot; nnoremap &lt;space&gt; @=((foldclosed(line(&#39;.&#39;)) &lt; 0) ? &#39;zc&#39; : &#39;zo&#39;)&lt;CR&gt;
+    &quot; 用空格键来开关折叠
+    &quot; return OS type, eg: windows, or linux, mac, et.st..
+    function! MySys()
+    if has(&quot;win16&quot;) || has(&quot;win32&quot;) || has(&quot;win64&quot;) || has(&quot;win95&quot;)
+    return &quot;windows&quot;
+    elseif has(&quot;unix&quot;)
+    return &quot;linux&quot;
+    endif
+    endfunction
+
+    &quot; 用户目录变量$VIMFILES
+    if MySys() == &quot;windows&quot;
+    let $VIMFILES = $VIM.&#39;/vimfiles&#39;
+    elseif MySys() == &quot;linux&quot;
+    let $VIMFILES = $HOME.&#39;/.vim&#39;
+    endif
+
+    &quot; 设定doc文档目录
+    let helptags=$VIMFILES.&#39;/doc&#39;
+
+    &quot; 设置字体 以及中文支持
+    if has(&quot;win32&quot;)
+    set guifont=Inconsolata:h12:cANSI
+    endif
+
+    &quot; 配置多语言环境
+    if has(&quot;multi_byte&quot;)
+    &quot; UTF-8 编码
+    set encoding=utf-8
+    set termencoding=utf-8
+    set formatoptions+=mM
+    set fencs=utf-8,gbk
+
+    if v:lang =~? &#39;^\(zh\)\|\(ja\)\|\(ko\)&#39;
+    set ambiwidth=double
+    endif
+
+    if has(&quot;win32&quot;)
+    source $VIMRUNTIME/delmenu.vim
+    source $VIMRUNTIME/menu.vim
+    language messages zh_CN.utf-8
+    endif
+    else
+    echoerr &quot;Sorry, this version of (g)vim was not compiled with +multi_byte&quot;
+    endif
+
+    &quot; Buffers操作快捷方式!
+    nnoremap &lt;C-RETURN&gt; :bnext&lt;CR&gt;
+    nnoremap &lt;C-S-RETURN&gt; :bprevious&lt;CR&gt;
+
+    &quot; Tab操作快捷方式!
+    nnoremap &lt;C-TAB&gt; :tabnext&lt;CR&gt;
+    nnoremap &lt;C-S-TAB&gt; :tabprev&lt;CR&gt;
+
+    &quot;关于tab的快捷键
+    &quot; map tn :tabnext&lt;cr&gt;
+    &quot; map tp :tabprevious&lt;cr&gt;
+    &quot; map td :tabnew .&lt;cr&gt;
+    &quot; map te :tabedit
+    &quot; map tc :tabclose&lt;cr&gt;
+
+    &quot;窗口分割时,进行切换的按键热键需要连接两次,比如从下方窗口移动
+    &quot;光标到上方窗口,需要&lt;c-w&gt;&lt;c-w&gt;k,非常麻烦,现在重映射为&lt;c-k&gt;,切换的
+    &quot;时候会变得非常方便.
+    nnoremap &lt;C-h&gt; &lt;C-w&gt;h
+    nnoremap &lt;C-j&gt; &lt;C-w&gt;j
+    nnoremap &lt;C-k&gt; &lt;C-w&gt;k
+    nnoremap &lt;C-l&gt; &lt;C-w&gt;l
+
+    &quot;一些不错的映射转换语法（如果在一个文件中混合了不同语言时有用）
+    nnoremap &lt;leader&gt;1 :set filetype=xhtml&lt;CR&gt;
+    nnoremap &lt;leader&gt;2 :set filetype=css&lt;CR&gt;
+    nnoremap &lt;leader&gt;3 :set filetype=javascript&lt;CR&gt;
+    nnoremap &lt;leader&gt;4 :set filetype=php&lt;CR&gt;
+
+    &quot; set fileformats=unix,dos,mac
+    &quot; nmap &lt;leader&gt;fd :se fileformat=dos&lt;CR&gt;
+    &quot; nmap &lt;leader&gt;fu :se fileformat=unix&lt;CR&gt;
+
+    &quot; use Ctrl+[l|n|p|cc] to list|next|previous|jump to count the result
+    &quot; map &lt;C-x&gt;l &lt;ESC&gt;:cl&lt;CR&gt;
+    &quot; map &lt;C-x&gt;n &lt;ESC&gt;:cn&lt;CR&gt;
+    &quot; map &lt;C-x&gt;p &lt;ESC&gt;:cp&lt;CR&gt;
+    &quot; map &lt;C-x&gt;c &lt;ESC&gt;:cc&lt;CR&gt;
+
+
+    &quot; 让 Tohtml 产生有 CSS 语法的 html
+    &quot; syntax/2html.vim，可以用:runtime! syntax/2html.vim
+    let html_use_css=1
+
+    &quot; Python 文件的一般设置，比如不要 tab 等
+    autocmd FileType python set tabstop=4 shiftwidth=4 expandtab
+    autocmd FileType python map &lt;F12&gt; :!python %&lt;CR&gt;
+
+    &quot; 选中状态下 Ctrl+c 复制
+    vmap &lt;C-c&gt; &quot;+y
+
+    &quot; 打开javascript折叠
+    let b:javascript_fold=1
+    &quot; 打开javascript对dom、html和css的支持
+    let javascript_enable_domhtmlcss=1
+    &quot; 设置字典 ~/.vim/dict/文件的路径
+    autocmd filetype javascript set dictionary=$VIMFILES/dict/javascript.dict
+    autocmd filetype css set dictionary=$VIMFILES/dict/css.dict
+    autocmd filetype php set dictionary=$VIMFILES/dict/php.dict
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - bufexplorer.vim Buffers切换
+    &quot; \be 全屏方式查看全部打开的文件列表
+    &quot; \bv 左右方式查看 \bs 上下方式查看
+    &quot;-----------------------------------------------------------------
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - taglist.vim 查看函数列表，需要ctags程序
+    &quot; F4 打开隐藏taglist窗口
+    &quot;-----------------------------------------------------------------
+    if MySys() == &quot;windows&quot; &quot; 设定windows系统中ctags程序的位置
+    let Tlist_Ctags_Cmd = &#39;&quot;&#39;.$VIMRUNTIME.&#39;/ctags.exe&quot;&#39;
+    elseif MySys() == &quot;linux&quot; &quot; 设定windows系统中ctags程序的位置
+    let Tlist_Ctags_Cmd = &#39;/usr/bin/ctags&#39;
+    endif
+    nnoremap &lt;silent&gt;&lt;F4&gt; :TlistToggle&lt;CR&gt;
+    let Tlist_Show_One_File = 1 &quot; 不同时显示多个文件的tag，只显示当前文件的
+    let Tlist_Exit_OnlyWindow = 1 &quot; 如果taglist窗口是最后一个窗口，则退出vim
+    let Tlist_Use_Right_Window = 1 &quot; 在右侧窗口中显示taglist窗口
+    let Tlist_File_Fold_Auto_Close=1 &quot; 自动折叠当前非编辑文件的方法列表
+    let Tlist_Auto_Open = 0
+    let Tlist_Auto_Update = 1
+    let Tlist_Hightlight_Tag_On_BufEnter = 1
+    let Tlist_Enable_Fold_Column = 0
+    let Tlist_Process_File_Always = 1
+    let Tlist_Display_Prototype = 0
+    let Tlist_Compact_Format = 1
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - mark.vim 给各种tags标记不同的颜色，便于观看调式的插件。
+    &quot; \m mark or unmark the word under (or before) the cursor
+    &quot; \r manually input a regular expression. 用于搜索.
+    &quot; \n clear this mark (i.e. the mark under the cursor), or clear all highlighted marks .
+    &quot; \* 当前MarkWord的下一个 \# 当前MarkWord的上一个
+    &quot; \/ 所有MarkWords的下一个 \? 所有MarkWords的上一个
+    &quot;-----------------------------------------------------------------
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - NERD_tree.vim 以树状方式浏览系统中的文件和目录
+    &quot; :ERDtree 打开NERD_tree :NERDtreeClose 关闭NERD_tree
+    &quot; o 打开关闭文件或者目录 t 在标签页中打开
+    &quot; T 在后台标签页中打开 ! 执行此文件
+    &quot; p 到上层目录 P 到根目录
+    &quot; K 到第一个节点 J 到最后一个节点
+    &quot; u 打开上层目录 m 显示文件系统菜单（添加、删除、移动操作）
+    &quot; r 递归刷新当前目录 R 递归刷新当前根目录
+    &quot;-----------------------------------------------------------------
+    &quot; F3 NERDTree 切换
+    map &lt;F3&gt; :NERDTreeToggle&lt;CR&gt;
+    imap &lt;F3&gt; &lt;ESC&gt;:NERDTreeToggle&lt;CR&gt;
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - NERD_commenter.vim 注释代码用的，
+    &quot; [count],cc 光标以下count行逐行添加注释(7,cc)
+    &quot; [count],cu 光标以下count行逐行取消注释(7,cu)
+    &quot; [count],cm 光标以下count行尝试添加块注释(7,cm)
+    &quot; ,cA 在行尾插入 /* */,并且进入插入模式。 这个命令方便写注释。
+    &quot; 注：count参数可选，无则默认为选中行或当前行
+    &quot;-----------------------------------------------------------------
+    let NERDSpaceDelims=1 &quot; 让注释符与语句之间留一个空格
+    let NERDCompactSexyComs=1 &quot; 多行注释时样子更好看
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - DoxygenToolkit.vim 由注释生成文档，并且能够快速生成函数标准注释
+    &quot;-----------------------------------------------------------------
+    let g:DoxygenToolkit_authorName=&quot;Asins - asinsimple AT gmail DOT com&quot;
+    let g:DoxygenToolkit_briefTag_funcName=&quot;yes&quot;
+    map &lt;leader&gt;da :DoxAuthor&lt;CR&gt;
+    map &lt;leader&gt;df :Dox&lt;CR&gt;
+    map &lt;leader&gt;db :DoxBlock&lt;CR&gt;
+    map &lt;leader&gt;dc a /* */&lt;LEFT&gt;&lt;LEFT&gt;&lt;LEFT&gt;
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin – ZenCoding.vim 很酷的插件，HTML代码生成
+    &quot; 插件最新版：http://github.com/mattn/zencoding-vim
+    &quot; 常用命令可看：http://nootn.com/blog/Tool/23/
+    &quot;-----------------------------------------------------------------
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin – checksyntax.vim JavaScript常见语法错误检查
+    &quot; 默认快捷方式为 F5
+    &quot;-----------------------------------------------------------------
+    let g:checksyntax_auto = 0 &quot; 不自动检查
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - NeoComplCache.vim 自动补全插件
+    &quot;-----------------------------------------------------------------
+    let g:AutoComplPop_NotEnableAtStartup = 1
+    let g:NeoComplCache_EnableAtStartup = 1
+    let g:NeoComplCache_SmartCase = 1
+    let g:NeoComplCache_TagsAutoUpdate = 1
+    let g:NeoComplCache_EnableInfo = 1
+    let g:NeoComplCache_EnableCamelCaseCompletion = 1
+    let g:NeoComplCache_MinSyntaxLength = 3
+    let g:NeoComplCache_EnableSkipCompletion = 1
+    let g:NeoComplCache_SkipInputTime = &#39;0.5&#39;
+    let g:NeoComplCache_SnippetsDir = $VIMFILES.&#39;/snippets&#39;
+    &quot; &lt;TAB&gt; completion.
+    inoremap &lt;expr&gt;&lt;TAB&gt; pumvisible() ? &quot;\&lt;C-n&gt;&quot; : &quot;\&lt;TAB&gt;&quot;
+    &quot; snippets expand key
+    imap &lt;silent&gt; &lt;C-e&gt; &lt;Plug&gt;(neocomplcache_snippets_expand)
+    smap &lt;silent&gt; &lt;C-e&gt; &lt;Plug&gt;(neocomplcache_snippets_expand)
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - matchit.vim 对%命令进行扩展使得能在嵌套标签和语句之间跳转
+    &quot; % 正向匹配 g% 反向匹配
+    &quot; [% 定位块首 ]% 定位块尾
+    &quot;-----------------------------------------------------------------
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin - vcscommand.vim 对%命令进行扩展使得能在嵌套标签和语句之间跳转
+    &quot; SVN/git管理工具
+    &quot;-----------------------------------------------------------------
+
+
+    &quot;-----------------------------------------------------------------
+    &quot; plugin – a.vim
+    &quot;-----------------------------------------------------------------
+</code></pre>
+</div><div class="tags"></div><div class="post-nav"><a href="/app/app-assets-requirement/" class="pre"><i class="icon-previous">App图片规格说明</i></a><a href="/tools/git/" class="next">Git使用<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>

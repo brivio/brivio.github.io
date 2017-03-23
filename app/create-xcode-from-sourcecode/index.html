@@ -1,0 +1,600 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>从源代码构建xcodeproj | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">从源代码构建xcodeproj</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">从源代码构建xcodeproj</h1><div class="post-meta">2015-12-24 22:41:28 | </div><span data-thread-key="app/create-xcode-from-sourcecode/" class="ds-thread-count"></span><div class="post-content"><p>用于解决*.xcodeproj修改困难、解决冲突困难的问题   </p>
+<h3 id="主程序"><a href="#主程序" class="headerlink" title="主程序"></a>主程序</h3><pre><code class="ruby">require &#39;pathname&#39;
+require &#39;xcodeproj&#39;
+require &#39;yaml&#39;
+require &#39;pp&#39;
+require &#39;json&#39;
+require &#39;digest&#39;
+require &#39;rexml/document&#39;
+require &#39;active_support/core_ext/string&#39;
+
+module APP
+    class Builder
+        def initialize(conf)
+
+            @config      = YAML::load(File.open(conf))
+            @project_name=@config[&#39;name&#39;]
+            @project_file=&#39;../&#39;+@project_name+&#39;.xcodeproj&#39;
+            @source_dir  =&#39;../source&#39;
+            @path_prefix = Pathname.new(@source_dir).realdirpath.to_s
+
+            @products_dir      =&#39;../Products&#39;
+            @products_app      =&quot;../Products/#{@project_name}.app&quot;
+            @frameworks_dir    =&#39;../Frameworks&#39;
+            @frameworks_ios_dir=&#39;../Frameworks/IOS&#39;
+
+            #文件列表初始化
+            @source_files      =[]
+            db_data            =&#39;./db.data&#39;
+            system &quot;find #{@source_dir} \\
+                ! -name .DS_Store  \\
+                ! -name .svn \\
+                ! -name .git \\
+                ! -path &#39;*.xcassets/*&#39; \\
+                ! -path &#39;*.bundle/*&#39; \\
+                ! -path &#39;*.framework/*&#39; |sort &gt;#{db_data}&quot;
+
+            file=File.new(db_data, &#39;r&#39;)
+            while path=file.gets
+                @source_files.push path.to_s.strip
+            end
+            file.close
+            File.delete db_data
+
+            @objects        ={}
+            @json           ={
+                :rootObject     =&gt; get_uuid(&#39;PBXProject&#39;),
+                :classes        =&gt; [],
+                :objectVersion  =&gt; 46,
+                :archiveVersion =&gt; 1,
+                :objects        =&gt; @objects,
+            }
+            @pbx_headers    =[]
+            @pbx_sources    =[]
+            @pbx_frameworks =[]
+            @pbx_resources  =[]
+
+            @framework_search_paths=[&#39;$(inherited)&#39;]
+            @library_search_paths  =[&#39;$(inherited)&#39;]
+        end
+
+        def run
+            create_pbx_ref
+            create_pbx_build_phase
+            create_pbx_project
+            create_pbx_native_target
+            create_pbx_configuration_list
+            convert_pbxproj
+            # scheme_install
+        end
+
+        def scheme_install
+            dir = @project_file+&quot;/xcuserdata/&quot;+ENV[&#39;LOGNAME&#39;]+&quot;.xcuserdatad/xcschemes&quot;
+            unless File.exist? dir
+                system &quot;mkdir -p #{dir}&quot;
+            end
+            file_path=dir+&quot;/&quot;+@project_name+&quot;.xcscheme&quot;
+            unless File.exist? file_path
+                content=get_scheme_tpl
+                file_put_contents(file_path, content.gsub(&#39;$(PROJECT_NAME)&#39;, @project_name))
+            end
+
+            doc =REXML::Document.new(File.new(file_path, &#39;r&#39;))
+
+            doc.root.elements.delete_all &#39;//PreActions&#39;
+            doc.root.elements.delete_all &#39;//PostActions&#39;
+            pre_action_el                      =REXML::Element.new &#39;PreActions&#39;
+            action_el                          =REXML::Element.new &#39;ExecutionAction&#39;
+            action_el.attributes[&#39;ActionType&#39;] =&#39;Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction&#39;
+            content_el                         =REXML::Element.new &#39;ActionContent&#39;
+            content_el.attributes[&#39;title&#39;]     =&#39;Run Script&#39;
+
+            content=&lt;&lt;eot
+buildNumber=$(/usr/libexec/PlistBuddy -c &#39;Print CFBundleVersion&#39; $INFOPLIST_FILE)
+buildNumber=$(($buildNumber+1))
+/usr/libexec/PlistBuddy -c &quot;Set :CFBundleVersion $buildNumber&quot; $INFOPLIST_FILE
+eot
+            content                                        =content.html_safe
+            content                                        =content.gsub(&quot;\n&quot;, &quot;$(LF)&quot;)
+            content_el.attributes[&#39;scriptText&#39;]            =content
+            env_build_el                                   =REXML::Element.new &#39;EnvironmentBuildable&#39;
+            build_ref_el                                   =REXML::Element.new &#39;BuildableReference&#39;
+            build_ref_el.attributes[&#39;BuildableIdentifier&#39;] =&#39;primary&#39;
+            build_ref_el.attributes[&#39;BuildableName&#39;]       =@project_name+&#39;.app&#39;
+            build_ref_el.attributes[&#39;BlueprintName&#39;]       =@project_name
+            build_ref_el.attributes[&#39;ReferencedContainer&#39;] =&#39;container:%s.xcodeproj&#39; %@project_name
+
+            env_build_el.add_element build_ref_el
+            content_el.add_element env_build_el
+            action_el.add_element content_el
+            pre_action_el.add_element action_el
+            doc.root.elements[&#39;//BuildAction&#39;].add_element pre_action_el
+            file_put_contents(file_path, doc.to_s.gsub(&#39;$(LF)&#39;, &#39;&amp;#10;&#39;))
+        end
+
+        # BuildPhase
+        def create_pbx_build_phase
+            @objects[get_uuid(&#39;PBXHeadersBuildPhase&#39;)]   ={
+                :isa                                =&gt; &#39;PBXHeadersBuildPhase&#39;,
+                :runOnlyForDeploymentPostprocessing =&gt; &#39;0&#39;,
+                :files                              =&gt; @pbx_headers,
+                :buildActionMask                    =&gt; &#39;2147483647&#39;,
+            }
+            @objects[get_uuid(&#39;PBXSourcesBuildPhase&#39;)]   ={
+                :isa                                =&gt; &#39;PBXSourcesBuildPhase&#39;,
+                :runOnlyForDeploymentPostprocessing =&gt; &#39;0&#39;,
+                :files                              =&gt; @pbx_sources,
+                :buildActionMask                    =&gt; &#39;2147483647&#39;,
+            }
+            @objects[get_uuid(&#39;PBXFrameworksBuildPhase&#39;)]={
+                :isa                                =&gt; &#39;PBXFrameworksBuildPhase&#39;,
+                :runOnlyForDeploymentPostprocessing =&gt; &#39;0&#39;,
+                :files                              =&gt; @pbx_frameworks,
+                :buildActionMask                    =&gt; &#39;2147483647&#39;,
+            }
+            if @config[&#39;dependencies&#39;][&#39;framework&#39;]
+                @config[&#39;dependencies&#39;][&#39;framework&#39;].each { |framework|
+                    add_pbx_ref_dir(
+                        @frameworks_ios_dir+&#39;/&#39;+framework+&#39;.framework&#39;,
+                        &#39;Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/&#39;+framework+&#39;.framework&#39;)
+                }
+            end
+            if @config[&#39;dependencies&#39;][&#39;dylib&#39;]
+                @config[&#39;dependencies&#39;][&#39;dylib&#39;].each { |framework|
+                    add_pbx_ref_file(@frameworks_dir+&#39;/lib&#39;+framework+&#39;.dylib&#39;, &#39;/usr/lib/lib&#39;+framework+&#39;.dylib&#39;);
+                }                
+            end
+            @objects[get_uuid(&#39;PBXResourcesBuildPhase&#39;)] ={
+                :isa                                =&gt; &#39;PBXResourcesBuildPhase&#39;,
+                :runOnlyForDeploymentPostprocessing =&gt; &#39;0&#39;,
+                :files                              =&gt; @pbx_resources,
+                :buildActionMask                    =&gt; &#39;2147483647&#39;,
+            }
+
+        end
+
+        def create_pbx_ref
+            add_pbx_ref_dir(&#39;..&#39;)
+            add_pbx_ref_dir(@products_dir)
+            add_pbx_ref_file(@products_app)
+            add_pbx_ref_dir(@frameworks_dir)
+            add_pbx_ref_dir(@frameworks_ios_dir)
+
+            @source_files.each { |path|
+                add_pbx_ref(path)
+            }
+        end
+
+        def add_pbx_ref_file(path, pbx_path=&#39;&#39;)
+            add_pbx_ref(path, &#39;file&#39;, pbx_path)
+        end
+
+        def add_pbx_ref_dir(path, pbx_path=&#39;&#39;)
+            add_pbx_ref(path, &#39;directory&#39;, pbx_path)
+        end
+
+        def add_pbx_ref(path, ftype=&#39;&#39;, pbx_path=&#39;&#39;)
+            uuid            =get_uuid(path)
+            build_file_uuid =get_uuid(path+&#39;_build_file&#39;)
+            file_ext        =File.extname(path)
+            file_name       =File.basename(path)
+            dir_name        =File.dirname(path)
+
+            if ftype.length==0
+                ftype=File.ftype(path)
+            end
+            if pbx_path.length==0
+                pbx_path=file_name
+            end
+
+            if %w(. Contents.json .DS_Store .gitignore .svn .git readme.txt).include?(file_name)
+                return
+            end
+
+            case ftype
+                when &#39;file&#39;
+                    if %w(Contents.json .DS_Store .gitignore readme.txt).include?(file_name)
+                        return
+                    end
+                    if %w(.framework .xcassets .xcdatamodeld .bundle).include?(File.extname(File.dirname(path)))
+                        return
+                    end
+                    @objects[uuid] ={
+                        :sourceTree =&gt; &#39;&lt;group&gt;&#39;,
+                        :isa        =&gt; &#39;PBXFileReference&#39;,
+                        :path       =&gt; pbx_path,
+                        :name       =&gt; file_name,
+                    }
+
+                    @objects[build_file_uuid]={
+                        :fileRef =&gt; uuid,
+                        :isa     =&gt; &#39;PBXBuildFile&#39;,
+                    }
+                    if %w(.m .c .mm .cpp .cxx .swift ).include?(file_ext)
+                        @pbx_sources.push(build_file_uuid)
+                    elsif %w(.h).include?(file_ext)
+                        @pbx_headers.push(build_file_uuid)
+                    elsif %w(.a .dylib).include?(file_ext)
+                        @pbx_frameworks.push(build_file_uuid)
+
+                        search_path= &#39;$(SRCROOT)&#39;+dir_name[2, dir_name.to_s.length-1]
+                        unless @library_search_paths.include? search_path
+                            @library_search_paths.push search_path
+                        end
+                    else
+                        unless %w(.app).include? file_ext
+                            @pbx_resources.push(build_file_uuid)
+                        end
+                    end
+                when &#39;directory&#39;
+                    if %w(.framework .xcassets .xcdatamodeld .bundle).include?(file_ext)
+                        @objects[uuid]           ={
+                            :sourceTree =&gt; &#39;&lt;group&gt;&#39;,
+                            :isa        =&gt; &#39;PBXFileReference&#39;,
+                            :path       =&gt; pbx_path,
+                            :name       =&gt; file_name,
+                        }
+                        @objects[build_file_uuid]={
+                            :fileRef =&gt; uuid,
+                            :isa     =&gt; &#39;PBXBuildFile&#39;,
+                        }
+                        if %w(.framework).include?(file_ext)
+                            @pbx_frameworks.push(build_file_uuid)
+
+                            search_path= &#39;$(SRCROOT)&#39;+dir_name[2, dir_name.to_s.length-1]
+                            unless @framework_search_paths.include? search_path
+                                @framework_search_paths.push search_path
+                            end
+                        elsif %w(.xcassets .xcdatamodeld .bundle).include?(file_ext)
+                            @pbx_resources.push(build_file_uuid)
+                        end
+                    else
+                        @objects[uuid]={
+                            :sourceTree =&gt; &#39;&lt;group&gt;&#39;,
+                            :isa        =&gt; &#39;PBXGroup&#39;,
+                            :path       =&gt; pbx_path,
+                            :name       =&gt; file_name,
+                            :children   =&gt; [],
+                        }
+                    end
+
+                else
+            end
+            unless %w(.).include?(dir_name)
+                if @objects[get_uuid(dir_name)][:children]!=nil
+                    @objects[get_uuid(dir_name)][:children].push(uuid)
+                end
+            end
+        end
+
+        # PBXProject
+        def create_pbx_project
+            @objects[get_uuid(&#39;PBXProject&#39;)]             ={
+                :buildConfigurationList =&gt; get_uuid(&#39;XCConfigurationList&#39;),
+                :targets                =&gt; [get_uuid(&#39;PBXNativeTarget&#39;)],
+                :developmentRegion      =&gt; &#39;English&#39;,
+                :knownRegions           =&gt; %w(en Base),
+                :isa                    =&gt; &#39;PBXProject&#39;,
+                :compatibilityVersion   =&gt; &#39;Xcode 3.2&#39;,
+                :productRefGroup        =&gt; get_uuid(@products_dir),
+                :projectDirPath         =&gt; &#39;&#39;,
+                :attributes             =&gt; {
+                    :LastUpgradeCheck =&gt; &#39;0710&#39;,
+                    :TargetAttributes =&gt; {
+                        get_uuid(&#39;PBXNativeTarget&#39;) =&gt; {
+                            :CreatedOnToolsVersion =&gt; &#39;7.1&#39;,
+                        },
+                        :ORGANIZATIONNAME           =&gt; &#39;Brivio Wang&#39;,
+                    }
+                },
+                :hasScannedForEncodings =&gt; &#39;0&#39;,
+                :projectRoot            =&gt; &#39;&#39;,
+                :mainGroup              =&gt; get_uuid(File.dirname(@source_dir)),
+            }
+            # mainGroup
+            @objects[get_uuid(File.dirname(@source_dir))]={
+                :sourceTree =&gt; &#39;&lt;group&gt;&#39;,
+                :isa        =&gt; &#39;PBXGroup&#39;,
+                :children   =&gt; [
+                    get_uuid(@source_dir),
+                    get_uuid(@products_dir),
+                    get_uuid(@frameworks_dir),
+                ],
+            }
+        end
+
+        # PBXNativeTarget
+        def create_pbx_native_target
+            @objects[get_uuid(&#39;PBXNativeTarget&#39;)]                ={
+                :buildConfigurationList =&gt; get_uuid(&#39;PBXNativeTarget_config_list&#39;),
+                :productReference       =&gt; get_uuid(@products_app),
+                :productType            =&gt; &#39;com.apple.product-type.application&#39;,
+                :productName            =&gt; @project_name,
+                :isa                    =&gt; &#39;PBXNativeTarget&#39;,
+                :buildPhases            =&gt; [
+                    get_uuid(&#39;PBXHeadersBuildPhase&#39;),
+                    get_uuid(&#39;PBXSourcesBuildPhase&#39;),
+                    get_uuid(&#39;PBXFrameworksBuildPhase&#39;),
+                    get_uuid(&#39;PBXResourcesBuildPhase&#39;),
+                ],
+                :dependencies           =&gt; [],
+                :name                   =&gt; @project_name,
+                :buildRules             =&gt; []
+            }
+            @objects[get_uuid(&#39;PBXNativeTarget_config_list&#39;)]    ={
+                :isa                           =&gt; &#39;XCConfigurationList&#39;,
+                :defaultConfigurationIsVisible =&gt; &#39;0&#39;,
+                :defaultConfigurationName      =&gt; &#39;Release&#39;,
+                :buildConfigurations           =&gt; [
+                    get_uuid(&#39;PBXNativeTarget_config_debug&#39;),
+                    get_uuid(&#39;PBXNativeTarget_config_release&#39;)
+                ],
+            }
+            # XCBuildConfiguration debug
+            @objects[get_uuid(&#39;PBXNativeTarget_config_debug&#39;)]   = {
+                :isa           =&gt; &#39;XCBuildConfiguration&#39;,
+                :name          =&gt; &#39;Debug&#39;,
+                :buildSettings =&gt; {},
+            }
+            # XCBuildConfiguration release
+            @objects[get_uuid(&#39;PBXNativeTarget_config_release&#39;)] = {
+                :isa           =&gt; &#39;XCBuildConfiguration&#39;,
+                :name          =&gt; &#39;Release&#39;,
+                :buildSettings =&gt; {},
+            }
+            default_config                                       ={
+                :FRAMEWORK_SEARCH_PATHS                 =&gt; @framework_search_paths,
+                :LIBRARY_SEARCH_PATHS                   =&gt; @library_search_paths,
+                :ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME =&gt; &#39;LaunchImage&#39;,
+                :ASSETCATALOG_COMPILER_APPICON_NAME     =&gt; &#39;AppIcon&#39;,
+                :IPHONEOS_DEPLOYMENT_TARGET             =&gt; &#39;7.0&#39;,
+                :ALWAYS_SEARCH_USER_PATHS               =&gt; &#39;YES&#39;,
+                :CLANG_CXX_LANGUAGE_STANDARD            =&gt; &#39;gnu++0x&#39;,
+                :CLANG_CXX_LIBRARY                      =&gt; &#39;libc++&#39;,
+                :CLANG_ENABLE_MODULES                   =&gt; &#39;YES&#39;,
+                :CLANG_ENABLE_OBJC_ARC                  =&gt; &#39;YES&#39;,
+                :CLANG_WARN_BOOL_CONVERSION             =&gt; &#39;YES&#39;,
+                :CLANG_WARN_CONSTANT_CONVERSION         =&gt; &#39;YES&#39;,
+                :CLANG_WARN_DIRECT_OBJC_ISA_USAGE       =&gt; &#39;YES_ERROR&#39;,
+                :CLANG_WARN_UNREACHABLE_CODE            =&gt; &#39;YES&#39;,
+                :CLANG_WARN__DUPLICATE_METHOD_MATCH     =&gt; &#39;YES&#39;,
+                :COPY_PHASE_STRIP                       =&gt; &#39;NO&#39;,
+                :ENABLE_STRICT_OBJC_MSGSEND             =&gt; &#39;YES&#39;,
+                :GCC_C_LANGUAGE_STANDARD                =&gt; &#39;gnu99&#39;,
+                :GCC_DYNAMIC_NO_PIC                     =&gt; &#39;NO&#39;,
+                :GCC_SYMBOLS_PRIVATE_EXTERN             =&gt; &#39;NO&#39;,
+                :GCC_WARN_64_TO_32_BIT_CONVERSION       =&gt; &#39;YES&#39;,
+                :GCC_WARN_ABOUT_RETURN_TYPE             =&gt; &#39;YES_ERROR&#39;,
+                :GCC_WARN_UNDECLARED_SELECTOR           =&gt; &#39;YES&#39;,
+                :GCC_WARN_UNINITIALIZED_AUTOS           =&gt; &#39;YES_AGGRESSIVE&#39;,
+                :GCC_WARN_UNUSED_FUNCTION               =&gt; &#39;YES&#39;,
+                :MTL_ENABLE_DEBUG_INFO                  =&gt; &#39;YES&#39;,
+                :SDKROOT                                =&gt; &#39;iphoneos&#39;,
+                :TARGETED_DEVICE_FAMILY                 =&gt; &#39;1&#39;,
+                :GCC_PRECOMPILE_PREFIX_HEADER           =&gt; &#39;YES&#39;,
+                :ENABLE_BITCODE                         =&gt; &#39;NO&#39;,
+                :ONLY_ACTIVE_ARCH                       =&gt; {:debug.to_s =&gt; &#39;YES&#39;, :release.to_s =&gt; &#39;NO&#39;},
+                :GCC_OPTIMIZATION_LEVEL                 =&gt; {:debug.to_s =&gt; &#39;0&#39;, :release.to_s =&gt; &#39;s&#39;},
+                :GCC_PREPROCESSOR_DEFINITIONS           =&gt; {:debug.to_s =&gt; &#39;$(inherited) DEBUG=1&#39;, :release.to_s =&gt; &#39;$(inherited)&#39;},
+                :PRODUCT_NAME                           =&gt; &#39;$(TARGET_NAME)&#39;,
+            }
+
+            res =default_config.merge @config[&#39;buildConfiguration&#39;]
+            res.each_key { |key|
+                if res[key].kind_of? Hash
+                    set_debug_setting(key, res[key][&#39;debug&#39;])
+                    set_release_setting(key, res[key][&#39;release&#39;])
+                else
+                    set_debug_setting(key, res[key])
+                    set_release_setting(key, res[key])
+                end
+            }
+        end
+
+        def create_pbx_configuration_list
+            # XCConfigurationList
+            @objects[get_uuid(&#39;XCConfigurationList&#39;)]          ={
+                :isa                           =&gt; &#39;XCConfigurationList&#39;,
+                :defaultConfigurationIsVisible =&gt; &#39;0&#39;,
+                :defaultConfigurationName      =&gt; &#39;Release&#39;,
+                :buildConfigurations           =&gt; [
+                    get_uuid(&#39;XCBuildConfiguration_debug&#39;),
+                    get_uuid(&#39;XCBuildConfiguration_release&#39;)
+                ],
+            }
+            # XCBuildConfiguration debug
+            @objects[get_uuid(&#39;XCBuildConfiguration_debug&#39;)]   = {
+                :isa           =&gt; &#39;XCBuildConfiguration&#39;,
+                :name          =&gt; &#39;Debug&#39;,
+                :buildSettings =&gt; {},
+            }
+            # XCBuildConfiguration release
+            @objects[get_uuid(&#39;XCBuildConfiguration_release&#39;)] = {
+                :isa           =&gt; &#39;XCBuildConfiguration&#39;,
+                :name          =&gt; &#39;Release&#39;,
+                :buildSettings =&gt; {},
+            }
+        end
+
+        def set_debug_setting(key, val)
+            @objects[get_uuid(&#39;PBXNativeTarget_config_debug&#39;)][:buildSettings][key]=val;
+        end
+
+        def set_release_setting(key, val)
+            @objects[get_uuid(&#39;PBXNativeTarget_config_release&#39;)][:buildSettings][key]=val;
+        end
+
+        def convert_pbxproj
+            unless File.exist? @project_file
+                Xcodeproj::Project.new(@project_file).save
+            end
+
+            file_put_contents(&quot;#{@project_file}/project.json&quot;, JSON.pretty_generate(@json))
+            `plutil -convert xml1 -o - #{@project_file}/project.json&gt;#{@project_file}/project2.pbxproj`
+            File.delete &quot;#{@project_file}/project.json&quot;
+            File.delete &quot;#{@project_file}/project.pbxproj&quot;
+            File.rename(&quot;#{@project_file}/project2.pbxproj&quot;, &quot;#{@project_file}/project.pbxproj&quot;)
+            project=Xcodeproj::Project.open(@project_file)
+            project.save
+        end
+
+        def pod_install
+            pods_dir=&#39;../Pods&#39;
+            add_pbx_ref_dir(pods_dir)
+            add_pbx_ref_file(pods_dir+&#39;/Pods.debug.xcconfig&#39;, &#39;Pods/Target Support Files/Pods/Pods.debug.xcconfig&#39;)
+            @objects[get_uuid(&#39;PBXNativeTarget_config_debug&#39;)][:baseConfigurationReference]=get_uuid(pods_dir+&#39;/Pods.debug.xcconfig&#39;)
+
+            add_pbx_ref_file(pods_dir+&#39;/Pods.release.xcconfig&#39;, &#39;Pods/Target Support Files/Pods/Pods.release.xcconfig&#39;)
+            @objects[get_uuid(&#39;PBXNativeTarget_config_release&#39;)][:baseConfigurationReference]=get_uuid(pods_dir+&#39;/Pods.release.xcconfig&#39;)
+
+        end
+
+        def get_uuid(str)
+            Digest::MD5.hexdigest(str).to_s[4..27]
+        end
+
+        def get_file_type(path)
+            file_ext=File.extname(path)
+            case file_ext
+                when &#39;.bundle&#39;
+                    &#39;wrapper.plug-in&#39;
+                when &#39;.framework&#39;
+                    &#39;wrapper.framework&#39;
+                else
+                    return &#39;file&#39;
+            end
+        end
+
+        def file_put_contents(path, content)
+            file=File.new(path, &#39;w&#39;)
+            file.puts content
+            file.close
+        end
+
+        def file_get_contents(path)
+            result=&quot;&quot;
+            file  =File.open(path, &#39;r&#39;)
+            while line=file.gets
+                result+=line
+            end
+            result
+        end
+
+        def get_scheme_tpl
+            content=&lt;&lt;eot
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;Scheme
+   LastUpgradeVersion = &quot;0710&quot;
+   version = &quot;1.3&quot;&gt;
+   &lt;BuildAction
+      parallelizeBuildables = &quot;YES&quot;
+      buildImplicitDependencies = &quot;YES&quot;&gt;
+      &lt;BuildActionEntries&gt;
+         &lt;BuildActionEntry
+            buildForTesting = &quot;YES&quot;
+            buildForRunning = &quot;YES&quot;
+            buildForProfiling = &quot;YES&quot;
+            buildForArchiving = &quot;YES&quot;
+            buildForAnalyzing = &quot;YES&quot;&gt;
+            &lt;BuildableReference
+               BuildableIdentifier = &quot;primary&quot;
+               BlueprintIdentifier = &quot;b80239c4607964aceb9a808d&quot;
+               BuildableName = &quot;$(PROJECT_NAME).app&quot;
+               BlueprintName = &quot;$(PROJECT_NAME)&quot;
+               ReferencedContainer = &quot;container:$(PROJECT_NAME).xcodeproj&quot;&gt;
+            &lt;/BuildableReference&gt;
+         &lt;/BuildActionEntry&gt;
+      &lt;/BuildActionEntries&gt;
+   &lt;/BuildAction&gt;
+   &lt;TestAction
+      buildConfiguration = &quot;Debug&quot;
+      selectedDebuggerIdentifier = &quot;Xcode.DebuggerFoundation.Debugger.LLDB&quot;
+      selectedLauncherIdentifier = &quot;Xcode.DebuggerFoundation.Launcher.LLDB&quot;
+      shouldUseLaunchSchemeArgsEnv = &quot;YES&quot;&gt;
+      &lt;Testables&gt;
+      &lt;/Testables&gt;
+      &lt;MacroExpansion&gt;
+         &lt;BuildableReference
+            BuildableIdentifier = &quot;primary&quot;
+            BlueprintIdentifier = &quot;b80239c4607964aceb9a808d&quot;
+            BuildableName = &quot;$(PROJECT_NAME).app&quot;
+            BlueprintName = &quot;$(PROJECT_NAME)&quot;
+            ReferencedContainer = &quot;container:$(PROJECT_NAME).xcodeproj&quot;&gt;
+         &lt;/BuildableReference&gt;
+      &lt;/MacroExpansion&gt;
+      &lt;AdditionalOptions&gt;
+      &lt;/AdditionalOptions&gt;
+   &lt;/TestAction&gt;
+   &lt;LaunchAction
+      buildConfiguration = &quot;Debug&quot;
+      selectedDebuggerIdentifier = &quot;Xcode.DebuggerFoundation.Debugger.LLDB&quot;
+      selectedLauncherIdentifier = &quot;Xcode.DebuggerFoundation.Launcher.LLDB&quot;
+      launchStyle = &quot;0&quot;
+      useCustomWorkingDirectory = &quot;NO&quot;
+      ignoresPersistentStateOnLaunch = &quot;NO&quot;
+      debugDocumentVersioning = &quot;YES&quot;
+      debugServiceExtension = &quot;internal&quot;
+      allowLocationSimulation = &quot;YES&quot;&gt;
+      &lt;BuildableProductRunnable
+         runnableDebuggingMode = &quot;0&quot;&gt;
+         &lt;BuildableReference
+            BuildableIdentifier = &quot;primary&quot;
+            BlueprintIdentifier = &quot;b80239c4607964aceb9a808d&quot;
+            BuildableName = &quot;$(PROJECT_NAME).app&quot;
+            BlueprintName = &quot;$(PROJECT_NAME)&quot;
+            ReferencedContainer = &quot;container:$(PROJECT_NAME).xcodeproj&quot;&gt;
+         &lt;/BuildableReference&gt;
+      &lt;/BuildableProductRunnable&gt;
+      &lt;AdditionalOptions&gt;
+      &lt;/AdditionalOptions&gt;
+   &lt;/LaunchAction&gt;
+   &lt;ProfileAction
+      buildConfiguration = &quot;Release&quot;
+      shouldUseLaunchSchemeArgsEnv = &quot;YES&quot;
+      savedToolIdentifier = &quot;&quot;
+      useCustomWorkingDirectory = &quot;NO&quot;
+      debugDocumentVersioning = &quot;YES&quot;&gt;
+      &lt;BuildableProductRunnable
+         runnableDebuggingMode = &quot;0&quot;&gt;
+         &lt;BuildableReference
+            BuildableIdentifier = &quot;primary&quot;
+            BlueprintIdentifier = &quot;b80239c4607964aceb9a808d&quot;
+            BuildableName = &quot;$(PROJECT_NAME).app&quot;
+            BlueprintName = &quot;$(PROJECT_NAME)&quot;
+            ReferencedContainer = &quot;container:$(PROJECT_NAME).xcodeproj&quot;&gt;
+         &lt;/BuildableReference&gt;
+      &lt;/BuildableProductRunnable&gt;
+   &lt;/ProfileAction&gt;
+   &lt;AnalyzeAction
+      buildConfiguration = &quot;Debug&quot;&gt;
+   &lt;/AnalyzeAction&gt;
+   &lt;ArchiveAction
+      buildConfiguration = &quot;Release&quot;
+      revealArchiveInOrganizer = &quot;YES&quot;&gt;
+   &lt;/ArchiveAction&gt;
+&lt;/Scheme&gt;
+eot
+        end
+    end
+end
+
+APP::Builder.new(ARGV.length==0 ? &#39;./project.config.yaml&#39; : ARGV[0]).run
+</code></pre>
+</div><div class="tags"><a href="/tags/ios/">ios</a></div><div class="post-nav"><a href="/app/ios-simulator-download/" class="pre"><i class="icon-previous">xcode模拟器下载速度慢解决方案</i></a><a href="/app/ios-snippet/" class="next">iOS代码片段<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#主程序"><span class="toc-number">1.</span> <span class="toc-text">主程序</span></a></li></ol></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>

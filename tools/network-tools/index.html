@@ -1,0 +1,42 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>常用网络命令 | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">常用网络命令</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">常用网络命令</h1><div class="post-meta">2014-05-21 00:00:00 | </div><span data-thread-key="tools/network-tools/" class="ds-thread-count"></span><div class="post-content"><p>常用网络命令集锦  </p>
+<p>##1、测试物理网络<br>　　命令：ping 192.168.0.8 －t ，参数－t是等待用户去中断测试  </p>
+<p>##2.查看DNS、IP、Mac等信息<br>　　A.Win98：winipcfg<br>　　B.Win2000以上：Ipconfig/all  </p>
+<p>##3.网络信使<br>　　命令：Net send 计算机名/IP　* (广播) 传送内容，注意不能跨网段<br>　　命令：net stop messenger 停止信使服务，也可以在面板－服务修改<br>　　命令：net start messenger 开始信使服务  </p>
+<p>##4.探测对方计算机名，所在的组、域及当前用户名 （追捕的工作原理）<br>　　命令：ping －a IP －t ，只显示NetBios名<br>　　命令：nbtstat -a IP 比较全的  </p>
+<p>##5.netstat -a 显示出你的计算机当前所开放的所有端口<br>　　命令：netstat -s -e<br>　　比较详细的显示你的网络资料，包括TCP、UDP、ICMP 和 IP的统计等  </p>
+<p>##6.探测arp绑定（动态和静态）列表，显示所有连接了我的计算机，显示对方IP和MAC地址<br>　　命令：arp -a  </p>
+<p>##7.在代理服务器端<br>　　捆绑IP和MAC地址，解决局域网内盗用IP！：<br>　　命令：ARP －s 192.168.10.59 00 －50－ff－6c－08－75<br>　　解除网卡的IP与MAC地址的绑定：<br>　　命令：arp -d 网卡IP  </p>
+<p>##8.在网络邻居上隐藏你的计算机<br>　　命令：net config server /hidden:yes<br>　　命令：net config server /hidden:no 则为开启  </p>
+<p>##9.net命令<br>　　A.显示当前工作组服务器列表 net   view，当不带选项使用本命令时，它就会显示当前域或网络上的计算机上的列表。<br>　　比如：查看这个IP上的共享资源，就可以C:>net view 192.168.10.8<br>在 192.168.10.8 的共享资源资源共享名 类型 用途 注释网站服务 Disk命令成功完成。<br>　　B.查看计算机上的用户帐号列表 net user<br>　　C.查看网络链接 net use<br>　　　　例如：net use z: \192.168.10.8\movie   将这个IP的movie共享目录映射为本地的Z盘<br>　　D.记录链接 net session<br>　　　　例如: C:>net session<br>　　　　计算机 用户名 客户类型 打开空闲时间<br>　　　　　\192.168.10.110 ROME Windows 2000 2195 0 00:03:12<br>　　　　　\192.168.10.51 ROME Windows 2000 2195 0 00:00:39<br>　　　　　命令成功完成。  </p>
+<p>##10.路由跟踪命令<br>　　A.tracert software.pchome.net<br>　　B.pathping software.pchome.net   除了显示路由外，还提供325S的分析，计算丢失包的％  </p>
+<p>##11.关于共享安全的几个命令<br>　　A.查看你机器的共享资源 net share<br>　　B.手工删除共享（可以编个bat文件，开机自运行，把共享都删了！）<br>　　　　命令：net share c$ /d<br>　　　　命令：net share d$ /d<br>　　　　命令：net share ipc$ /d<br>　　　　命令：net share admin$ /d<br>　　　注意$后有空格。<br>　　C.增加一个共享：<br>　　　　　　　　c:\net share mymovie=e:\downloads\movie /users:1<br>mymovie 共享成功。<br>同时限制链接用户数为1人。  </p>
+<p>##12.在DOS行下设置静态IP<br>　　A.设置静态IP  </p>
+<pre><code class="sh">CMD
+netsh
+netsh&gt;int
+interface&gt;ip
+interface ip&gt;set add &quot;本地链接&quot; static IP地址 mask gateway
+</code></pre>
+<p>　　B.查看IP设置  </p>
+<pre><code class="sh">interface ip&gt;show address  
+Arp
+</code></pre>
+<p>　　显示和修改“地址解析协议 (ARP)”缓存中的项目。ARP缓存中包含一个或多个表，它们用于存储 IP 地址及其经过解析的以太网或令牌环物理地址。计算机上安装的每一个以太网或令牌环网络适配器都有自己单独的表。如果在没有参数的情况下使用，则 arp 命令将显示帮助信息。</p>
+</div><div class="tags"></div><div class="post-nav"><a href="/tools/shell-access-network/" class="pre"><i class="icon-previous">命令行访问网络</i></a><a href="/tools/use-ubuntu/" class="next">Ubuntu使用<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>

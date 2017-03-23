@@ -1,0 +1,217 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/><meta content="telephone=no" name="format-detection"/><meta name="description"/><title>virtualbox中使用linux | 遗落的记忆</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"/><link rel="stylesheet" type="text/css" href="/css/pure-min.css"/><link rel="stylesheet" type="text/css" href="/css/grids-responsive-min.css"/><link rel="stylesheet" type="text/css" href="/css/style.css"/><link rel="Shortcut Icon" type="image/x-icon" href="https://assets-cdn.github.com/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"/><link rel="alternate" type="application/atom+xml" href="/atom.xml"/><link rel="stylesheet" type="text/css" href="/google-code-prettify/prettify.css"/><script src="/google-code-prettify/prettify.js" type="text/javascript"></script></head><body><div style="display:none;" class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">virtualbox中使用linux</h1><a id="logo" href="/">遗落的记忆</a><p class="description">It's a long road</p></div><div id="nav-menu"><a href="/" class="current"><i class="icon-home"> 首页</i></a><a href="/archives"><i class="icon-archive"> 归档</i></a><a href="/about"><i class="icon-about"> 关于</i></a></div></div><div id="layout" class="pure-g"></div><div class="pure-u-1 pure-u-md-4-5"><div class="content_container"><div class="post post-page"><h1 class="post-title">virtualbox中使用linux</h1><div class="post-meta">2014-11-21 00:00:00 | </div><span data-thread-key="tools/virtualbox-linux/" class="ds-thread-count"></span><div class="post-content"><p>virtualbox中使用linux时的一些配置  </p>
+<p>#配置网络</p>
+<p>##几种网络模式</p>
+<ul>
+<li>网络地址转换模式<br>  虚拟机只能单向访问主机;虚拟机间相互不能访问</li>
+<li>桥接模式<br>  虚拟机与主机、其他虚拟机都能互相访问</li>
+<li>内部网络模式<br>  只有虚拟机之间能互相访问</li>
+<li>Host-only Adapter  主机模式<br>  和内部网络模式类似，但是通过配置可以实现与主机互联</li>
+</ul>
+<p>##centos（桥接模式）</p>
+<ul>
+<li><p>修改网络配置文件 ifcfg-eth0，</p>
+<pre><code>  vi /etc/sysconfig/network-scripts/ifcfg-eth0
+</code></pre></li>
+<li><p>这会*打开一个文本编辑区域。按 i 键开始编辑，用上下左右键将光标移动到 ONBOOT=no 那里，删除 no，输入 yes。  </p>
+</li>
+<li><p>然后按 Ctrl+c 键退出编辑状态，再按 shift+; 组合键输入 : ，紧接着输入 wq 保存并退出文本编辑器。<br>  将 ifcfg-eth0 复制一份另存为 ifcfg-eth1:</p>
+<pre><code>  cp -rf /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1
+</code></pre></li>
+<li><p>然后编辑 ifcfg-eth1（编辑方法同前述编辑 ifcfg-eth0 的方法）：</p>
+<pre><code>  vi /etc/sysconfig/network-scripts/ifcfg-eth1
+</code></pre></li>
+<li><p>将其中的内容改为（其中 HWADDR 就是刚才记下的那一串字符，只不过用 : 分割开了）：</p>
+<pre><code>  DEVICE=&quot;eth1&quot;
+  HWADDR=08:00:27:F2:6B:E7
+  TYPE=Ethernet
+  NM_CONTROLLED=no
+  ONBOOT=yes
+  IPADDR=192.168.0.10
+  NETMAK=255.255.255.0
+  GATEWAY=192.168.0.1
+</code></pre></li>
+<li><p>然后保存退出编辑器。接着执行下面的指令重新启动所有网络连接：</p>
+<pre><code>  service network restart
+</code></pre><p>  应该能看到类似下面的反馈信息：</p>
+<pre><code>  Shutting down loopback interface:                      [  OK  ]
+  Bringing up loopback interface:                        [  OK  ]
+  Bringing up interface eth0:
+  Determining IP information for eth0... done.           [  OK  ]
+  Bringing up interface eth1:                            [  OK  ]
+</code></pre><p>  如果出现错误<code>Device eth0 does not seem to be present, delaying initialisation</code>，把<code>/etc/udev/rules.d/70-persistent-net.rules</code>删掉重启。      </p>
+</li>
+</ul>
+<p>##ubuntu设置代码（桥接模式）</p>
+<ul>
+<li>修改配置文件<code>vi /etc/network/interfaces</code>内容：</li>
+</ul>
+<pre><code class="sh">auto lo
+iface lo inet loopback
+
+auto eth0
+#iface eth0 inet dhcp 动态分配ip，注释掉
+#静态ip地址
+iface eth0 inet static
+#ip地址
+address 192.168.1.188
+#子网掩码
+netmask 255.255.255.0
+#网关
+gateway 192.168.1.2
+</code></pre>
+<p>#使用ssh-keygen无密码登录</p>
+<pre><code class="sh">#在cygwin执行
+ssh-keygen -t rsa  
+#把.ssh/id_rsa.pub上传到远程服务器，执行
+cd /root/.ssh/
+cat id_rsa.pub &gt;&gt;authorized_keys
+</code></pre>
+<p>#挂载宿主机windows共享文件夹</p>
+<ul>
+<li><p>挂载命令</p>
+<pre><code>  mount -t cifs -o username=&quot;Administrator&quot;,password=&quot;&quot; //192.168.1.117/sourcecode /mnt/sourcecode
+</code></pre></li>
+<li><p>删除挂载</p>
+<pre><code>  umount /mnt/sourcecode
+</code></pre></li>
+</ul>
+<p>#清理大文件和目录</p>
+<ul>
+<li><p>先贴命令：<code>du -m --max-depth=1</code>或<code>du -h --max-depth=1du：</code>用于统计linux中文件或目录所占磁盘空间的大小du参数</p>
+<blockquote>
+<p>m：以M为单位展示查询结果<br>-h：以K、M、G为单位展示查询结果，提高信息可读性<br>–max-depth=1：其中，数字“1”是指查询结果中最多显示的目录层数，这里指最多显示一层目录</p>
+</blockquote>
+</li>
+<li><p>显示当前目录下文件的大小</p>
+<pre><code>  du -sh *
+</code></pre></li>
+<li><p>显示当前目录下文件和子文件的大小</p>
+<pre><code>  du -h
+</code></pre><p>*显示前10个占用空间最大的文件或目录</p>
+<pre><code>  du -s * | sort -nr | head       
+</code></pre></li>
+</ul>
+<p>#账户管理</p>
+<ul>
+<li>修改root密码：<pre><code>  passwd root
+</code></pre></li>
+</ul>
+<p>#处理压缩包</p>
+<ul>
+<li><code>.tar</code> 解包：<code>tar xvf FileName.tar</code>,打包：<code>tar cvf FileName.tar DirName</code>  </li>
+<li><code>.gz</code> 解压1：<code>gunzip FileName.gz</code>,解压2：<code>gzip -d FileName.gz</code>,压缩：<code>gzip FileName</code>  </li>
+<li><code>.tar.gz</code> 和 <code>.tgz</code>  解压：<code>tar zxvf FileName.tar.gz</code>,压缩：<code>tar zcvf FileName.tar.gz DirName</code>  </li>
+<li><code>.bz2</code> 解压1：<code>bzip2 -d FileName.bz2</code> ,解压2：<code>bunzip2 FileName.bz2</code>,压缩： <code>bzip2 -z FileName</code>  </li>
+<li><code>.tar.bz2</code>  解压：<code>tar jxvf FileName.tar.bz2</code> ,压缩：<code>tar jcvf FileName.tar.bz2 DirName</code>  </li>
+<li><code>.bz</code> 解压1：<code>bzip2 -d FileName.bz</code>,解压2：<code>bunzip2 FileName.bz</code>,压缩：未知  </li>
+<li><code>.tar.bz</code> 解压：<code>tar jxvf FileName.tar.bz</code>,压缩：未知  </li>
+<li><code>.zip</code> 解压：<code>unzip FileName.zip</code>,压缩：<code>zip FileName.zip DirName</code>  </li>
+<li><code>.rar</code> 解压：<code>rar x FileName.rar</code>,压缩：<code>rar a FileName.rar DirName</code>  </li>
+</ul>
+<p>#端口配置</p>
+<pre><code class="sh">#开放端口:8080
+/sbin/iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
+#将更改进行保存
+/etc/rc.d/init.d/iptables save
+#重启防火墙以便改动生效:(或者直接重启系统)
+/etc/init.d/iptables restart
+
+#关闭防火墙
+/etc/init.d/iptables stop
+service iptables stop # 停止服务
+#查看防火墙信息
+/etc/init.d/iptables status
+</code></pre>
+<p>#常用命令</p>
+<pre><code>##系统
+```sh
+uname -a               # 查看内核/操作系统/CPU信息
+head -n 1 /etc/issue   # 查看操作系统版本
+cat /proc/cpuinfo      # 查看CPU信息
+hostname               # 查看计算机名
+lspci -tv              # 列出所有PCI设备
+lsusb -tv              # 列出所有USB设备
+lsmod                  # 列出加载的内核模块
+env                    # 查看环境变量
+```
+
+##资源
+```sh
+free -m                # 查看内存使用量和交换区使用量
+df -h                  # 查看各分区使用情况
+du -sh &lt;目录名&gt;        # 查看指定目录的大小
+grep MemTotal /proc/meminfo   # 查看内存总量
+grep MemFree /proc/meminfo    # 查看空闲内存量
+uptime                 # 查看系统运行时间、用户数、负载
+cat /proc/loadavg      # 查看系统负载
+```
+
+##磁盘和分区
+```sh
+df -hl                 # 查看磁盘使用状态
+mount | column -t      # 查看挂接的分区状态
+fdisk -l               # 查看所有分区
+swapon -s              # 查看所有交换分区
+hdparm -i /dev/hda     # 查看磁盘参数(仅适用于IDE设备)
+dmesg | grep IDE       # 查看启动时IDE设备检测状况
+```
+
+##网络
+```sh
+ifconfig               # 查看所有网络接口的属性
+iptables -L            # 查看防火墙设置
+route -n               # 查看路由表
+netstat -lntp          # 查看所有监听端口
+netstat -antp          # 查看所有已经建立的连接
+netstat -s             # 查看网络统计信息
+```
+
+进程
+```sh
+ps -ef                 # 查看所有进程
+top                    # 实时显示进程状态
+```
+
+用户
+```sh
+w                      # 查看活动用户
+id &lt;用户名&gt;            # 查看指定用户信息
+last                   # 查看用户登录日志
+cut -d: -f1 /etc/passwd   # 查看系统所有用户
+cut -d: -f1 /etc/group    # 查看系统所有组
+crontab -l             # 查看当前用户的计划任务
+```
+
+服务
+```sh
+chkconfig --list       # 列出所有系统服务
+chkconfig --list | grep on    # 列出所有启动的系统服务
+```
+
+程序
+```sh
+rpm -qa                # 查看所有安装的软件包
+```
+</code></pre><p>#[CentOS]安装软件：/lib/ld-linux.so.2: bad ELF interpreter 解决</p>
+<pre><code class="sh">yum install glibc.i686
+#error while loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory
+yum install libstdc++.so.6
+</code></pre>
+</div><div class="tags"></div><div class="post-nav"><a href="/tools/git/" class="pre"><i class="icon-previous">Git使用</i></a><a href="/web/qq-auto-login/" class="next">QQ空间自动登录<i class="icon-next"></i></a></div></div></div></div><div class="pure-u-1-5"><div id="sidebar"><div class="clear"><div id="toc" class="toc-article"><div class="toc-title">文章目录</div></div></div></div></div><a id="rocket" href="#top" class="show"></a><div id="footer"><a href="/" rel="nofollow">@ Brivio Wang</a><script>var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256760942'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s4.cnzz.com/z_stat.php%3Fid%3D1256760942%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));
+</script></div></div></body><script src="/js/jquery.min.js" type="text/javascript"></script>
+<script src="/js/main.js" type="text/javascript"></script><script src="/js/fancybox.pack.js" type="text/javascript"></script><link rel="stylesheet" href="/css/jquery.fancybox.css" type="text/css"><script>$(document).ready(function () {
+    $("img").wrap(function () {
+        if ($(this).hasClass('nofancybox')) return;
+        return '<a href="' + $(this).attr("src") + '" rel="group" />'
+    });
+});</script><script>$(document).ready(function () {
+    $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+        helpers: {
+            title: {type: 'inside'}
+        },
+        afterLoad: function () {
+            this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+        }
+    });
+});
+</script></html>
